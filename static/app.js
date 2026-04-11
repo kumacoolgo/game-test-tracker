@@ -78,6 +78,11 @@ function renderGrid() {
         `;
 
         row.addEventListener("click", () => selectRow(task.id));
+        row.addEventListener("dblclick", () => {
+            selectedId = task.id;
+            selectRow(task.id);
+            openEditModal(task);
+        });
         gridBody.appendChild(row);
     });
 }
@@ -217,6 +222,13 @@ document.getElementById("cancel-edit").addEventListener("click", closeEditModal)
 
 editModal.addEventListener("click", (e) => {
     if (e.target === editModal) closeEditModal();
+});
+
+// Esc closes modal, Enter submits
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && editModal.classList.contains("active")) {
+        closeEditModal();
+    }
 });
 
 // ─── Init ──────────────────────────────────────────────────────────────────

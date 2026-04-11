@@ -11,6 +11,7 @@ from database import get_engine, Base, get_db
 from schemas import TaskCreate, TaskUpdate, TaskResponse, ReorderRequest
 from auth import verify_credentials
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 import crud
 
 
@@ -74,5 +75,6 @@ def delete_task(task_id: int, db: Session = Depends(get_db), _username=Depends(v
 
 
 @app.get("/health")
-def health():
+def health(db: Session = Depends(get_db)):
+    db.execute(text("SELECT 1"))
     return {"status": "ok"}

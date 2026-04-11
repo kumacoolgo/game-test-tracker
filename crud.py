@@ -1,6 +1,7 @@
-"""CRUD operations for tasks."""
+"""CRUD operations for tasks — with concurrency-safe reorder."""
 
 from sqlalchemy.orm import Session
+from sqlalchemy import func, select
 from models import Task
 from schemas import TaskCreate, TaskUpdate
 
@@ -14,8 +15,9 @@ def get_task(db: Session, task_id: int) -> Task | None:
 
 
 def create_task(db: Session, task_in: TaskCreate) -> Task:
-    max_order = db.query(Task).order_by(Task.sort_order.desc()).first()
-    next_order = (max_order.sort_order + 1) if max_order else 1
+    # Use func.max instead of full table scan
+    max_order = db.query(func.max(Task.sort_order)).scalar()
+    next_order = (max_order or 0) + 1
 
     task = Task(
         title=task_in.title,
@@ -50,6 +52,7 @@ def delete_task(db: Session, task_id: int) -> bool:
 
     db.delete(task)
 
+    # Renormalize sort_order for remaining tasks
     remaining = db.query(Task).order_by(Task.sort_order).all()
     for idx, t in enumerate(remaining):
         t.sort_order = idx + 1
@@ -59,7 +62,15 @@ def delete_task(db: Session, task_id: int) -> bool:
 
 
 def reorder_task(db: Session, task_id: int, direction: str) -> Task | None:
-    all_tasks = db.query(Task).order_by(Task.sort_order).all()
+    """
+    Swap sort_order with neighbor task (up or down).
+    Uses SELECT FOR UPDATE to prevent concurrent reorder conflicts.
+    """
+    # Lock all tasks in sort_order order — prevents concurrent reorder races
+    all_tasks = db.execute(
+        select(Task).order_by(Task.sort_order).with_for_update()
+    ).scalars().all()
+
     task_ids = [t.id for t in all_tasks]
 
     if task_id not in task_ids:
@@ -68,16 +79,17 @@ def reorder_task(db: Session, task_id: int, direction: str) -> Task | None:
     current_idx = task_ids.index(task_id)
 
     if direction == "up" and current_idx == 0:
-        return None
+        return None  # Already at top
 
     if direction == "down" and current_idx == len(task_ids) - 1:
-        return None
+        return None  # Already at bottom
 
     neighbor_idx = current_idx - 1 if direction == "up" else current_idx + 1
 
     current_task = all_tasks[current_idx]
     neighbor_task = all_tasks[neighbor_idx]
 
+    # Swap sort_orders atomically within this transaction
     current_task.sort_order, neighbor_task.sort_order = (
         neighbor_task.sort_order,
         current_task.sort_order,

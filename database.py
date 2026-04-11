@@ -1,4 +1,4 @@
-"""Database connection via SQLAlchemy."""
+"""Database connection via SQLAlchemy — handles Zeabur's postgres:// prefix."""
 
 import os
 from sqlalchemy import create_engine
@@ -9,7 +9,11 @@ DATABASE_URL = os.getenv(
     "postgresql://admin:admin@localhost:5432/game_tracker"
 )
 
-# Allow override for testing
+# SQLAlchemy 2.x doesn't accept postgres:// — Zeabur often provides that
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# Pool settings for production
 _engine = None
 _SessionLocal = None
 
@@ -17,7 +21,12 @@ _SessionLocal = None
 def get_engine():
     global _engine
     if _engine is None:
-        _engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+        _engine = create_engine(
+            DATABASE_URL,
+            pool_pre_ping=True,
+            pool_size=5,
+            max_overflow=10,
+        )
     return _engine
 
 
@@ -41,7 +50,7 @@ def get_db():
 
 
 def reset_engine():
-    """Reset the global engine. Used for testing."""
+    """Reset globals. For testing only."""
     global _engine, _SessionLocal
     _engine = None
     _SessionLocal = None
