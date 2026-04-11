@@ -63,23 +63,41 @@ def test_unauthorized(client):
 
 
 def test_crud_flow(client):
-    # All requests need Basic Auth
     headers = {"Authorization": "Basic YWRtaW46YWRtaW4xMjM="}
 
-    rv = client.post("/api/tasks", headers=headers, json={"title": "Bug #1"})
+    # Create with full fields
+    rv = client.post("/api/tasks", headers=headers, json={
+        "task_name": "Bug #1",
+        "publisher": "Studio A",
+        "game_title": "RPG Quest",
+        "reward_amount": 500,
+        "payment_cost": 100,
+        "payment_received_date": "2026-04-15",
+    })
     assert rv.status_code == 201
     task = rv.json()
-    assert task["title"] == "Bug #1"
+    assert task["task_name"] == "Bug #1"
+    assert task["reward_amount"] == 500
+    assert task["payment_cost"] == 100
+    assert task["profit"] == 400  # auto-calculated
+    assert task["payment_received_date"] == "2026-04-15"
     assert task["sort_order"] == 1
     task_id = task["id"]
 
+    # List
     rv = client.get("/api/tasks", headers=headers)
     assert rv.status_code == 200
     assert len(rv.json()) == 1
 
-    rv = client.put(f"/api/tasks/{task_id}", headers=headers, json={"status": "passed"})
-    assert rv.json()["status"] == "passed"
+    # Update profit fields
+    rv = client.put(f"/api/tasks/{task_id}", headers=headers, json={
+        "reward_amount": 600,
+        "payment_cost": 150,
+    })
+    updated = rv.json()
+    assert updated["profit"] == 450  # auto-calculated on update
 
+    # Delete
     rv = client.delete(f"/api/tasks/{task_id}", headers=headers)
     assert rv.status_code == 200
 
@@ -88,8 +106,8 @@ def test_reorder_flow(client):
     headers = {"Authorization": "Basic YWRtaW46YWRtaW4xMjM="}
 
     ids = []
-    for title in ["Task A", "Task B", "Task C"]:
-        rv = client.post("/api/tasks", headers=headers, json={"title": title})
+    for name in ["Task A", "Task B", "Task C"]:
+        rv = client.post("/api/tasks", headers=headers, json={"task_name": name})
         ids.append(rv.json()["id"])
 
     def get_order():
@@ -119,5 +137,5 @@ def test_reorder_flow(client):
 
 def test_update_nonexistent(client):
     headers = {"Authorization": "Basic YWRtaW46YWRtaW4xMjM="}
-    rv = client.put("/api/tasks/9999", headers=headers, json={"title": "X"})
+    rv = client.put("/api/tasks/9999", headers=headers, json={"task_name": "X"})
     assert rv.status_code == 404
