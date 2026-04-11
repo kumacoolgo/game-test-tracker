@@ -67,18 +67,33 @@ def test_reorder(client):
         rv = client.post("/api/tasks", json={"title":title})
         ids.append(rv.get_json()["id"])
 
-    # Move first task down
+    # Get current order (re-read from server after each reorder)
+    def get_ids():
+        rv = client.get("/api/tasks")
+        return [t["id"] for t in rv.get_json()]
+
+    # Move first task (A) down -> now order is [B, A, C]
     rv = client.put("/api/tasks/reorder", json={"id":ids[0],"direction":"down"})
     assert rv.status_code == 200
+    current = get_ids()
+    assert current == [ids[1], ids[0], ids[2]]  # B, A, C
 
-    # Move last task up
+    # Move last task (C) up -> now order is [B, C, A]
     rv = client.put("/api/tasks/reorder", json={"id":ids[2],"direction":"up"})
     assert rv.status_code == 200
+    current = get_ids()
+    assert current == [ids[1], ids[2], ids[0]]  # B, C, A
 
-    # Can't move first task up
-    rv = client.put("/api/tasks/reorder", json={"id":ids[0],"direction":"up"})
+    # Can't move first task (B, index 0) up
+    rv = client.put("/api/tasks/reorder", json={"id":ids[1],"direction":"up"})
     assert rv.status_code == 400
 
-    # Can't move last task down
+    # Can't move last task (A, index 2) down
+    rv = client.put("/api/tasks/reorder", json={"id":ids[0],"direction":"down"})
+    assert rv.status_code == 400
+
+    # Middle task (C) can go up or down
+    rv = client.put("/api/tasks/reorder", json={"id":ids[2],"direction":"up"})
+    assert rv.status_code == 200
     rv = client.put("/api/tasks/reorder", json={"id":ids[2],"direction":"down"})
-    assert rv.status_code == 400
+    assert rv.status_code == 200
