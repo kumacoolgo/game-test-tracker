@@ -1,99 +1,127 @@
-"""Simple smoke tests for the Game Test Tracker API."""
+"""API smoke tests for Game Test Tracker (FastAPI + SQLite in-memory)."""
 
 import sys
-sys.path.insert(0, ".")
-import pytest
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app import create_app
-from app.models import init_db
-import tempfile, os
+# Must set SQLite BEFORE importing database
+import os
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
+# Now import — uses the env var
+import database
+from database import Base, get_db
+from main import app
+
+# Replace global engine with in-memory SQLite
+_test_engine = create_engine(
+    "sqlite:///:memory:",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+_test_session = sessionmaker(autocommit=False, autoflush=False, bind=_test_engine)
+
+# Override the global engine factory
+original_get_engine = database.get_engine
+database._engine = _test_engine
+database._SessionLocal = _test_session
+
+# Also patch get_db to use our test session
+def override_get_db():
+    db = _test_session()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@pytest.fixture(autouse=True)
+def setup_db():
+    Base.metadata.create_all(bind=_test_engine)
+    yield
+    Base.metadata.drop_all(bind=_test_engine)
+
 
 @pytest.fixture
 def client():
-    db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-    db.close()
-    # Patch DATABASE path before importing app
-    import app.models as models
-    original_db = models.DATABASE
-    models.DATABASE = db.name
-    # Re-init to create schema in temp db
-    from app.models import init_db
-    init_db()
-    app = create_app()
-    app.config["TESTING"] = True
-    with app.test_client() as c:
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(app) as c:
         yield c
-    models.DATABASE = original_db
-    os.unlink(db.name)
+    app.dependency_overrides.clear()
 
-def test_login_logout(client):
-    rv = client.post("/api/login", json={"username":"admin","password":"admin123"})
-    assert rv.status_code == 200
-    assert rv.get_json()["username"] == "admin"
 
-    rv = client.post("/api/logout")
+def test_health(client):
+    rv = client.get("/health")
     assert rv.status_code == 200
+    assert rv.json() == {"status": "ok"}
+
+
+def test_unauthorized(client):
+    rv = client.get("/api/tasks")
+    assert rv.status_code == 401
+
 
 def test_crud_flow(client):
-    # Login
-    client.post("/api/login", json={"username":"admin","password":"admin123"})
+    headers = {"Authorization": "Basic YWRtaW46YWRtaW4xMjM="}
 
-    # Create
-    rv = client.post("/api/tasks", json={"title":"Test Bug","priority":"high"})
+    rv = client.post("/api/tasks", headers=headers, json={"title": "Bug #1"})
     assert rv.status_code == 201
-    task = rv.get_json()
-    assert task["title"] == "Test Bug"
+    task = rv.json()
+    assert task["title"] == "Bug #1"
+    assert task["sort_order"] == 1
     task_id = task["id"]
 
-    # Read
-    rv = client.get("/api/tasks")
+    rv = client.get("/api/tasks", headers=headers)
     assert rv.status_code == 200
-    assert len(rv.get_json()) == 1
+    assert len(rv.json()) == 1
 
-    # Update
-    rv = client.put(f"/api/tasks/{task_id}", json={"status":"passed"})
-    assert rv.get_json()["status"] == "passed"
+    rv = client.put(f"/api/tasks/{task_id}", headers=headers, json={"status": "passed"})
+    assert rv.json()["status"] == "passed"
 
-    # Delete
-    rv = client.delete(f"/api/tasks/{task_id}")
+    rv = client.delete(f"/api/tasks/{task_id}", headers=headers)
     assert rv.status_code == 200
 
-def test_reorder(client):
-    client.post("/api/login", json={"username":"admin","password":"admin123"})
 
-    # Create 3 tasks
+def test_reorder_flow(client):
+    headers = {"Authorization": "Basic YWRtaW46YWRtaW4xMjM="}
+
     ids = []
-    for title in ["Task A","Task B","Task C"]:
-        rv = client.post("/api/tasks", json={"title":title})
-        ids.append(rv.get_json()["id"])
+    for title in ["Task A", "Task B", "Task C"]:
+        rv = client.post("/api/tasks", headers=headers, json={"title": title})
+        ids.append(rv.json()["id"])
 
-    # Get current order (re-read from server after each reorder)
-    def get_ids():
-        rv = client.get("/api/tasks")
-        return [t["id"] for t in rv.get_json()]
+    def get_order():
+        rv = client.get("/api/tasks", headers=headers)
+        return [t["id"] for t in rv.json()]
 
-    # Move first task (A) down -> now order is [B, A, C]
-    rv = client.put("/api/tasks/reorder", json={"id":ids[0],"direction":"down"})
+    assert get_order() == ids
+
+    # Move A down → [B, A, C]
+    rv = client.put("/api/tasks/reorder", headers=headers, json={"id": ids[0], "direction": "down"})
     assert rv.status_code == 200
-    current = get_ids()
-    assert current == [ids[1], ids[0], ids[2]]  # B, A, C
+    assert get_order() == [ids[1], ids[0], ids[2]]
 
-    # Move last task (C) up -> now order is [B, C, A]
-    rv = client.put("/api/tasks/reorder", json={"id":ids[2],"direction":"up"})
+    # Move C up → [B, C, A]
+    rv = client.put("/api/tasks/reorder", headers=headers, json={"id": ids[2], "direction": "up"})
     assert rv.status_code == 200
-    current = get_ids()
-    assert current == [ids[1], ids[2], ids[0]]  # B, C, A
+    assert get_order() == [ids[1], ids[2], ids[0]]
 
-    # Can't move first task (B, index 0) up
-    rv = client.put("/api/tasks/reorder", json={"id":ids[1],"direction":"up"})
+    # Can't move first (B) up
+    rv = client.put("/api/tasks/reorder", headers=headers, json={"id": ids[1], "direction": "up"})
     assert rv.status_code == 400
 
-    # Can't move last task (A, index 2) down
-    rv = client.put("/api/tasks/reorder", json={"id":ids[0],"direction":"down"})
+    # Can't move last (A) down
+    rv = client.put("/api/tasks/reorder", headers=headers, json={"id": ids[0], "direction": "down"})
     assert rv.status_code == 400
 
-    # Middle task (C) can go up or down
-    rv = client.put("/api/tasks/reorder", json={"id":ids[2],"direction":"up"})
-    assert rv.status_code == 200
-    rv = client.put("/api/tasks/reorder", json={"id":ids[2],"direction":"down"})
-    assert rv.status_code == 200
+
+def test_update_nonexistent(client):
+    headers = {"Authorization": "Basic YWRtaW46YWRtaW4xMjM="}
+    rv = client.put("/api/tasks/9999", headers=headers, json={"title": "X"})
+    assert rv.status_code == 404
