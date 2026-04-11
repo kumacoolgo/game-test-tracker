@@ -12,6 +12,7 @@ from schemas import TaskCreate, TaskUpdate, TaskResponse, ReorderRequest
 from auth import verify_credentials
 from sqlalchemy.orm import Session
 import crud
+from auth import APP_USER
 
 
 @asynccontextmanager
@@ -32,6 +33,21 @@ async def root():
 
 
 # ─── REST API ───────────────────────────────────────────────────────────────
+
+@app.post("/api/login")
+def login(_username=Depends(verify_credentials)):
+    return {"username": _username}
+
+
+@app.post("/api/logout")
+def logout():
+    return {"ok": True}
+
+
+@app.get("/api/me")
+def me(_username=Depends(verify_credentials)):
+    return {"username": _username}
+
 
 @app.get("/api/tasks", response_model=list[TaskResponse])
 def list_tasks(db: Session = Depends(get_db), _username=Depends(verify_credentials)):
