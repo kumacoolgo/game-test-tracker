@@ -6,7 +6,7 @@ FastAPI + PostgreSQL task tracker for game testing. Deploys as a Docker containe
 
 - **Backend**: FastAPI (serves UI + REST API on port 8080)
 - **Database**: PostgreSQL (Zeabur)
-- **Auth**: HTTP Basic Auth via environment variables (handled by browser)
+- **Auth**: HTTP Basic Auth — browser handles login popup, no session/token needed
 - **Container**: GHCR Docker image (`ghcr.io/kumacoolgo/game-test-tracker:latest`)
 
 ## Quick Start (Local Dev)
@@ -28,14 +28,15 @@ uvicorn main:app --reload --port 8080
 4. Map port `8080`
 5. Bind app service to PostgreSQL network
 
-## API Endpoints
+## Auth
+
+Simply open the app in your browser. A native HTTP Basic Auth popup will appear. Enter your `APP_USER` / `APP_PASSWORD`. No separate login page needed.
+
+## API Endpoints (all require Basic Auth)
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | /api/login | Fake login (returns {"username": "admin"}) |
-| POST | /api/logout | Fake logout |
-| GET | /api/me | Current user |
-| GET | /api/tasks | List tasks (auth required) |
+| GET | /api/tasks | List tasks |
 | POST | /api/tasks | Create task |
 | PUT | /api/tasks/{id} | Update task |
 | DELETE | /api/tasks/{id} | Delete task |

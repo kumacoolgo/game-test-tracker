@@ -1,6 +1,7 @@
 /**
- * Game Test Tracker - Frontend Logic
- * Handles auth, CRUD, row selection, and reorder (up/down).
+ * Game Test Tracker - Frontend
+ * Auth is handled entirely by the browser via HTTP Basic Auth.
+ * No login page, no token management.
  */
 
 const API = "/api";
@@ -9,75 +10,34 @@ const API = "/api";
 
 let tasks = [];
 let selectedId = null;
-let isLoggedIn = false;
 
 // ─── DOM refs ─────────────────────────────────────────────────────────────
 
-const loginModal = document.getElementById("login-modal");
-const editModal = document.getElementById("edit-modal");
 const gridBody = document.getElementById("grid-body");
 const statusMessage = document.getElementById("status-message");
 
-const btnLogin = document.getElementById("btn-login");
-const btnLogout = document.getElementById("btn-logout");
 const btnNew = document.getElementById("btn-new");
 const btnEdit = document.getElementById("btn-edit");
 const btnDelete = document.getElementById("btn-delete");
 const btnUp = document.getElementById("btn-up");
 const btnDown = document.getElementById("btn-down");
-const usernameDisplay = document.getElementById("username-display");
 
-const loginForm = document.getElementById("login-form");
-const loginError = document.getElementById("login-error");
+const editModal = document.getElementById("edit-modal");
 const taskForm = document.getElementById("task-form");
 const modalTitle = document.getElementById("modal-title");
-
-// ─── Auth ─────────────────────────────────────────────────────────────────
-
-async function checkSession() {
-    const res = await fetch(`${API}/me`);
-    const data = await res.json();
-    if (data.username) {
-        isLoggedIn = true;
-        showAuth(data.username);
-        await loadTasks();
-    }
-}
-
-function showAuth(username) {
-    btnLogin.style.display = "none";
-    btnLogout.style.display = "inline-block";
-    usernameDisplay.textContent = username;
-    setButtonsEnabled(true);
-}
-
-function setButtonsEnabled(enabled) {
-    btnNew.disabled = !enabled;
-    btnEdit.disabled = !enabled;
-    btnDelete.disabled = !enabled;
-    btnUp.disabled = !enabled;
-    btnDown.disabled = !enabled;
-}
-
-function clearAuth() {
-    isLoggedIn = false;
-    selectedId = null;
-    tasks = [];
-    btnLogin.style.display = "inline-block";
-    btnLogout.style.display = "none";
-    usernameDisplay.textContent = "";
-    setButtonsEnabled(false);
-    renderGrid();
-}
 
 // ─── API helpers ───────────────────────────────────────────────────────────
 
 async function api(method, path, body) {
     const opts = { method, headers: { "Content-Type": "application/json" } };
-    if (body) opts.body = JSON.stringify(body);
+    if (body !== undefined) opts.body = JSON.stringify(body);
     const res = await fetch(`${API}${path}`, opts);
+    if (res.status === 401) {
+        showStatus("Authentication required — reload and enter credentials", true);
+        throw new Error("Unauthorized");
+    }
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
     return data;
 }
 
@@ -90,29 +50,8 @@ async function loadTasks() {
         updateReorderButtons();
         renderGrid();
     } catch (e) {
-        showStatus("Failed to load tasks: " + e.message);
+        showStatus("Failed to load: " + e.message, true);
     }
-}
-
-async function createTask(fields) {
-    await api("POST", "/tasks", fields);
-    await loadTasks();
-}
-
-async function updateTask(id, fields) {
-    await api("PUT", `/tasks/${id}`, fields);
-    await loadTasks();
-}
-
-async function deleteTask(id) {
-    await api("DELETE", `/tasks/${id}`);
-    selectedId = null;
-    await loadTasks();
-}
-
-async function reorderTask(id, direction) {
-    await api("PUT", "/tasks/reorder", { id, direction });
-    await loadTasks();
 }
 
 // ─── Render ────────────────────────────────────────────────────────────────
@@ -121,7 +60,7 @@ function renderGrid() {
     gridBody.innerHTML = "";
 
     if (tasks.length === 0) {
-        gridBody.innerHTML = '<div class="grid-row" style="justify-content:center;color:#666">No tasks yet</div>';
+        gridBody.innerHTML = '<div class="grid-row empty">No tasks — click New to add one</div>';
         return;
     }
 
@@ -133,7 +72,7 @@ function renderGrid() {
         row.innerHTML = `
             <div class="grid-cell col-id">${task.id}</div>
             <div class="grid-cell col-title">${esc(task.title)}</div>
-            <div class="grid-cell col-status status-${task.status}">${task.status.replace("_", " ")}</div>
+            <div class="grid-cell col-status status-${task.status}">${task.status.replace(/_/g, ' ')}</div>
             <div class="grid-cell col-priority priority-${task.priority}">${task.priority}</div>
             <div class="grid-cell col-order">${index + 1}</div>
         `;
@@ -145,7 +84,7 @@ function renderGrid() {
 
 function esc(str) {
     const div = document.createElement("div");
-    div.textContent = str;
+    div.textContent = str || "";
     return div.innerHTML;
 }
 
@@ -164,30 +103,17 @@ function selectRow(id) {
 }
 
 function updateReorderButtons() {
-    if (!isLoggedIn || selectedId === null) {
+    if (selectedId === null) {
         btnUp.disabled = true;
         btnDown.disabled = true;
         return;
     }
-
     const idx = tasks.findIndex(t => t.id === selectedId);
     btnUp.disabled = idx <= 0;
     btnDown.disabled = idx >= tasks.length - 1;
 }
 
 // ─── Modals ───────────────────────────────────────────────────────────────
-
-function openLoginModal() {
-    loginError.textContent = "";
-    loginModal.classList.add("active");
-    document.getElementById("login-username").focus();
-}
-
-function closeLoginModal() {
-    loginModal.classList.remove("active");
-    loginForm.reset();
-    loginError.textContent = "";
-}
 
 function openEditModal(task) {
     modalTitle.textContent = task ? "Edit Task" : "New Task";
@@ -217,33 +143,8 @@ function showStatus(msg, isError = false) {
 
 // ─── Event listeners ───────────────────────────────────────────────────────
 
-// Auth
-btnLogin.addEventListener("click", openLoginModal);
-btnLogout.addEventListener("click", async () => {
-    await api("POST", "/logout");
-    clearAuth();
-    showStatus("Logged out");
-});
-
-loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const username = document.getElementById("login-username").value;
-    const password = document.getElementById("login-password").value;
-    try {
-        const data = await api("POST", "/login", { username, password });
-        isLoggedIn = true;
-        closeLoginModal();
-        showAuth(data.username);
-        showStatus("Logged in as " + data.username);
-    } catch (err) {
-        loginError.textContent = err.message;
-    }
-});
-
-document.getElementById("cancel-edit").addEventListener("click", closeEditModal);
-
-// Toolbar buttons
 btnNew.addEventListener("click", () => openEditModal(null));
+
 btnEdit.addEventListener("click", () => {
     const task = tasks.find(t => t.id === selectedId);
     if (task) openEditModal(task);
@@ -253,7 +154,9 @@ btnDelete.addEventListener("click", async () => {
     if (!selectedId) return;
     if (!confirm("Delete this task?")) return;
     try {
-        await deleteTask(selectedId);
+        await api("DELETE", `/tasks/${selectedId}`);
+        selectedId = null;
+        await loadTasks();
         showStatus("Task deleted");
     } catch (err) {
         showStatus(err.message, true);
@@ -263,7 +166,8 @@ btnDelete.addEventListener("click", async () => {
 btnUp.addEventListener("click", async () => {
     if (!selectedId) return;
     try {
-        await reorderTask(selectedId, "up");
+        await api("PUT", "/tasks/reorder", { id: selectedId, direction: "up" });
+        await loadTasks();
         showStatus("Moved up");
     } catch (err) {
         showStatus(err.message, true);
@@ -273,14 +177,14 @@ btnUp.addEventListener("click", async () => {
 btnDown.addEventListener("click", async () => {
     if (!selectedId) return;
     try {
-        await reorderTask(selectedId, "down");
+        await api("PUT", "/tasks/reorder", { id: selectedId, direction: "down" });
+        await loadTasks();
         showStatus("Moved down");
     } catch (err) {
         showStatus(err.message, true);
     }
 });
 
-// Task form submit
 taskForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const id = document.getElementById("task-id").value;
@@ -296,26 +200,25 @@ taskForm.addEventListener("submit", async (e) => {
     }
     try {
         if (id) {
-            await updateTask(parseInt(id), fields);
+            await api("PUT", `/tasks/${id}`, fields);
             showStatus("Task updated");
         } else {
-            await createTask(fields);
+            await api("POST", "/tasks", fields);
             showStatus("Task created");
         }
         closeEditModal();
+        await loadTasks();
     } catch (err) {
         showStatus(err.message, true);
     }
 });
 
-// Close modals on backdrop click
-loginModal.addEventListener("click", (e) => {
-    if (e.target === loginModal) closeLoginModal();
-});
+document.getElementById("cancel-edit").addEventListener("click", closeEditModal);
+
 editModal.addEventListener("click", (e) => {
     if (e.target === editModal) closeEditModal();
 });
 
 // ─── Init ──────────────────────────────────────────────────────────────────
 
-checkSession();
+loadTasks();

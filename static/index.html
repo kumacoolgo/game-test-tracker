@@ -8,19 +8,6 @@
 </head>
 <body>
     <div id="app">
-        <!-- Login Modal -->
-        <div id="login-modal" class="modal">
-            <div class="modal-content">
-                <h2>Login</h2>
-                <form id="login-form">
-                    <input type="text" id="login-username" placeholder="Username" required>
-                    <input type="password" id="login-password" placeholder="Password" required>
-                    <button type="submit">Login</button>
-                </form>
-                <p id="login-error" class="error"></p>
-            </div>
-        </div>
-
         <!-- Edit Modal -->
         <div id="edit-modal" class="modal">
             <div class="modal-content">
@@ -52,15 +39,10 @@
         <!-- Main Content -->
         <header>
             <h1>Game Test Tracker</h1>
-            <div id="auth-section">
-                <button id="btn-login" class="btn">Login</button>
-                <button id="btn-logout" class="btn" style="display:none;">Logout</button>
-                <span id="username-display"></span>
-            </div>
         </header>
 
         <div id="toolbar">
-            <button id="btn-new" class="btn btn-primary" disabled>New</button>
+            <button id="btn-new" class="btn btn-primary">New</button>
             <button id="btn-edit" class="btn" disabled>Edit</button>
             <button id="btn-delete" class="btn btn-danger" disabled>Delete</button>
             <button id="btn-up" class="btn" disabled>Up</button>

@@ -4,7 +4,6 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Must set SQLite BEFORE importing database
 import os
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
@@ -14,12 +13,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-# Now import — uses the env var
 import database
 from database import Base, get_db
 from main import app
 
-# Replace global engine with in-memory SQLite
 _test_engine = create_engine(
     "sqlite:///:memory:",
     connect_args={"check_same_thread": False},
@@ -27,12 +24,10 @@ _test_engine = create_engine(
 )
 _test_session = sessionmaker(autocommit=False, autoflush=False, bind=_test_engine)
 
-# Override the global engine factory
-original_get_engine = database.get_engine
 database._engine = _test_engine
 database._SessionLocal = _test_session
 
-# Also patch get_db to use our test session
+
 def override_get_db():
     db = _test_session()
     try:
@@ -68,6 +63,7 @@ def test_unauthorized(client):
 
 
 def test_crud_flow(client):
+    # All requests need Basic Auth
     headers = {"Authorization": "Basic YWRtaW46YWRtaW4xMjM="}
 
     rv = client.post("/api/tasks", headers=headers, json={"title": "Bug #1"})
