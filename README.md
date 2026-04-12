@@ -1,52 +1,53 @@
 # Game Test Tracker
 
-FastAPI + PostgreSQL task tracker for game testing. Deploys as a Docker container on Zeabur.
+极简游戏测试记录工具，用于记录测试任务、测试用例、测试结果等信息。
 
-## Architecture
+## 技术栈
 
-- **Backend**: FastAPI (serves UI + REST API on port 8080)
-- **Database**: PostgreSQL (Zeabur)
-- **Auth**: HTTP Basic Auth — browser handles login popup, no session/token needed
-- **Container**: GHCR Docker image (`ghcr.io/kumacoolgo/game-test-tracker:latest`)
+- **后端**：FastAPI（端口 8080，同时提供 UI 和 REST API）
+- **数据库**：PostgreSQL（Zeabur）
+- **认证**：HTTP Basic Auth（浏览器原生弹窗，无需登录页）
+- **部署**：Docker（GHCR 镜像）
 
-## Quick Start (Local Dev)
+## Zeabur 部署
 
-```bash
-pip install -r requirements.txt
-# Set DATABASE_URL for local PostgreSQL
-uvicorn main:app --reload --port 8080
-```
+### 1. 创建 PostgreSQL 数据库
 
-## Deploy on Zeabur
+在 Zeabur 控制台创建 PostgreSQL 数据库，复制连接字符串（`DATABASE_URL`）。
 
-1. Create PostgreSQL on Zeabur → copy `DATABASE_URL`
-2. Deploy from GHCR: `ghcr.io/kumacoolgo/game-test-tracker:latest`
-3. Configure env vars:
-   - `DATABASE_URL` = your PostgreSQL connection string
-   - `APP_USER` = login username (default: admin)
-   - `APP_PASSWORD` = login password
-4. Map port `8080`
-5. Bind app service to PostgreSQL network
+### 2. 部署服务
 
-## Auth
+在 Zeabur  Marketplace 安装 **game-test-tracker**，或手动从 GitHub 部署：
 
-Simply open the app in your browser. A native HTTP Basic Auth popup will appear. Enter your `APP_USER` / `APP_PASSWORD`. No separate login page needed.
+- 镜像地址：`ghcr.io/kumacoolgo/game-test-tracker:latest`
 
-## API Endpoints (all require Basic Auth)
+### 3. 配置环境变量
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | /api/tasks | List tasks |
-| POST | /api/tasks | Create task |
-| PUT | /api/tasks/{id} | Update task |
-| DELETE | /api/tasks/{id} | Delete task |
-| PUT | /api/tasks/reorder | Reorder task (`{"id": 1, "direction": "up\|down"}`) |
-| GET | /health | Health check (no auth) |
+| 变量 | 说明 |
+|------|------|
+| `DATABASE_URL` | PostgreSQL 连接字符串（必填） |
+| `APP_USER` | 登录用户名（默认：admin） |
+| `APP_PASSWORD` | 登录密码（必填） |
 
-## Environment Variables
+### 4. 绑定端口
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| DATABASE_URL | postgresql://... | PostgreSQL connection string |
-| APP_USER | admin | Basic auth username |
-| APP_PASSWORD | admin123 | Basic auth password |
+将容器端口 **8080** 映射到外部访问。
+
+### 5. 连接数据库
+
+将应用服务绑定到 PostgreSQL 所在的网络。
+
+## 使用说明
+
+打开应用后，浏览器会弹出 HTTP Basic Auth 认证框，输入 `APP_USER` / `APP_PASSWORD` 即可进入。
+
+## API 接口（均需认证）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | /api/tasks | 获取任务列表 |
+| POST | /api/tasks | 创建任务 |
+| PUT | /api/tasks/{id} | 更新任务 |
+| DELETE | /api/tasks/{id} | 删除任务 |
+| PUT | /api/tasks/reorder | 调整顺序（`{"id": 1, "direction": "up\|down"}`） |
+| GET | /health | 健康检查（无需认证） |
