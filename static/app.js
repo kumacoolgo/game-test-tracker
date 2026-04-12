@@ -110,6 +110,10 @@ function toggleDetail(row, task) {
         ${detailItem("Gamepack", task.gamepack)}
     `;
 
+    detail.querySelectorAll(".value").forEach(el => {
+        el.onclick = () => copyText(el.dataset.text);
+    });
+
     row.after(detail);
 }
 
@@ -117,7 +121,7 @@ function detailItem(label, text) {
     return `
         <div class="detail-item">
             <div class="label">${label}</div>
-            <div class="value" onclick="copyText('${escapeHtml(text || "")}')">
+            <div class="value" data-text="${escapeHtml(text || "")}">
                 ${escapeHtml(text || "")}
             </div>
         </div>
@@ -143,7 +147,6 @@ function escapeHtml(str) {
 // ─── Selection ──────────────────────────────────────────────────────────────
 
 function selectRow(id) {
-    // Close any open detail rows first
     document.querySelectorAll(".detail-row").forEach(el => el.remove());
 
     selectedId = selectedId === id ? null : id;

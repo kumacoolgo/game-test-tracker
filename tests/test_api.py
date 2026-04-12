@@ -65,22 +65,17 @@ def test_unauthorized(client):
 def test_crud_flow(client):
     headers = {"Authorization": "Basic YWRtaW46YWRtaW4xMjM="}
 
-    # Create with full fields
     rv = client.post("/api/tasks", headers=headers, json={
-        "task_name": "Bug #1",
+        "test_name": "Test A",
         "publisher": "Studio A",
-        "game_title": "RPG Quest",
-        "reward_amount": 500,
-        "payment_cost": 100,
-        "payment_received_date": "2026-04-15",
+        "payment": "100",
+        "income": "500"
     })
     assert rv.status_code == 201
     task = rv.json()
-    assert task["task_name"] == "Bug #1"
-    assert task["reward_amount"] == 500
-    assert task["payment_cost"] == 100
-    assert task["profit"] == 400  # auto-calculated
-    assert task["payment_received_date"] == "2026-04-15"
+    assert task["test_name"] == "Test A"
+    assert task["payment"] == "100"
+    assert task["income"] == "500"
     assert task["sort_order"] == 1
     task_id = task["id"]
 
@@ -89,13 +84,14 @@ def test_crud_flow(client):
     assert rv.status_code == 200
     assert len(rv.json()) == 1
 
-    # Update profit fields
+    # Update fields
     rv = client.put(f"/api/tasks/{task_id}", headers=headers, json={
-        "reward_amount": 600,
-        "payment_cost": 150,
+        "payment": "150",
+        "income": "600",
     })
     updated = rv.json()
-    assert updated["profit"] == 450  # auto-calculated on update
+    assert updated["payment"] == "150"
+    assert updated["income"] == "600"
 
     # Delete
     rv = client.delete(f"/api/tasks/{task_id}", headers=headers)
@@ -107,7 +103,7 @@ def test_reorder_flow(client):
 
     ids = []
     for name in ["Task A", "Task B", "Task C"]:
-        rv = client.post("/api/tasks", headers=headers, json={"task_name": name})
+        rv = client.post("/api/tasks", headers=headers, json={"test_name": name})
         ids.append(rv.json()["id"])
 
     def get_order():
@@ -137,5 +133,5 @@ def test_reorder_flow(client):
 
 def test_update_nonexistent(client):
     headers = {"Authorization": "Basic YWRtaW46YWRtaW4xMjM="}
-    rv = client.put("/api/tasks/9999", headers=headers, json={"task_name": "X"})
+    rv = client.put("/api/tasks/9999", headers=headers, json={"test_name": "X"})
     assert rv.status_code == 404

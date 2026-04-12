@@ -51,10 +51,7 @@ def reorder_task(payload: ReorderRequest, db: Session = Depends(get_db), _userna
 
     task = crud.reorder_task(db, payload.id, payload.direction)
     if not task:
-        raise HTTPException(
-            status_code=400,
-            detail="Already at top" if payload.direction == "up" else "Already at bottom"
-        )
+        raise HTTPException(status_code=400, detail="Invalid reorder")
     return {"message": "reordered"}
 
 
