@@ -1,6 +1,6 @@
 /**
  * Game Test Tracker - Frontend
- * Auth: browser HTTP Basic Auth (no login page, no token)
+ * 极简测试记录工具
  */
 
 const API = "/api";
@@ -10,7 +10,7 @@ const API = "/api";
 let tasks = [];
 let selectedId = null;
 
-// ─── DOM refs ─────────────────────────────────────────────────────────────
+// ─── DOM refs ───────────────────────────────────────────────────────────────
 
 const gridBody = document.getElementById("grid-body");
 const statusMessage = document.getElementById("status-message");
@@ -25,14 +25,14 @@ const editModal = document.getElementById("edit-modal");
 const taskForm = document.getElementById("task-form");
 const modalTitle = document.getElementById("modal-title");
 
-// ─── API helpers ───────────────────────────────────────────────────────────
+// ─── API helpers ────────────────────────────────────────────────────────────
 
 async function api(method, path, body) {
     const opts = { method, headers: { "Content-Type": "application/json" } };
     if (body !== undefined) opts.body = JSON.stringify(body);
     const res = await fetch(`${API}${path}`, opts);
     if (res.status === 401) {
-        showStatus("Authentication required — reload and enter credentials", true);
+        showStatus("需要认证 — 刷新页面并输入凭证", true);
         throw new Error("Unauthorized");
     }
     const data = await res.json().catch(() => ({}));
@@ -40,7 +40,7 @@ async function api(method, path, body) {
     return data;
 }
 
-// ─── Tasks ─────────────────────────────────────────────────────────────────
+// ─── Tasks ──────────────────────────────────────────────────────────────────
 
 async function loadTasks() {
     try {
@@ -49,11 +49,11 @@ async function loadTasks() {
         updateReorderButtons();
         renderGrid();
     } catch (e) {
-        showStatus("Failed to load: " + e.message, true);
+        showStatus("加载失败: " + e.message, true);
     }
 }
 
-// ─── Render ────────────────────────────────────────────────────────────────
+// ─── Render ─────────────────────────────────────────────────────────────────
 
 function renderGrid() {
     gridBody.innerHTML = "";
@@ -65,27 +65,68 @@ function renderGrid() {
 
     tasks.forEach((task, index) => {
         const row = document.createElement("div");
-        row.className = "grid-row" + (task.id === selectedId ? " selected" : "");
+        row.className = "grid-row";
         row.dataset.id = task.id;
 
         row.innerHTML = `
-            <div class="grid-cell col-id">${index + 1}</div>
-            <div class="grid-cell col-name">${esc(task.task_name)}</div>
-            <div class="grid-cell col-game">${esc(task.game_title || "—")}</div>
-            <div class="grid-cell col-reward">¥${fmt(task.reward_amount)}</div>
-            <div class="grid-cell col-cost">¥${fmt(task.payment_cost)}</div>
-            <div class="grid-cell col-profit">¥${fmt(task.profit)}</div>
-            <div class="grid-cell col-received">${task.payment_received_date || "未到账"}</div>
+            <div class="grid-cell">${index + 1}</div>
+            <div class="grid-cell">${esc(task.test_name)}</div>
+            <div class="grid-cell">${esc(task.publisher || "")}</div>
+            <div class="grid-cell">${task.start_date || ""}</div>
+            <div class="grid-cell">${task.end_date || ""}</div>
+            <div class="grid-cell action-btn">Test Case</div>
+            <div class="grid-cell">${esc(task.work_time || "")}</div>
+            <div class="grid-cell">${esc(task.payment || "")}</div>
+            <div class="grid-cell">${esc(task.income || "")}</div>
+            <div class="grid-cell">${task.received_date || ""}</div>
         `;
 
-        row.addEventListener("click", () => selectRow(task.id));
-        row.addEventListener("dblclick", () => {
-            selectedId = task.id;
-            selectRow(task.id);
-            openEditModal(task);
+        row.querySelector(".action-btn").addEventListener("click", () => {
+            toggleDetail(row, task);
         });
+
+        row.addEventListener("click", (e) => {
+            if (!e.target.classList.contains("action-btn")) {
+                selectRow(task.id);
+            }
+        });
+
         gridBody.appendChild(row);
     });
+}
+
+function toggleDetail(row, task) {
+    if (row.nextSibling && row.nextSibling.classList.contains("detail-row")) {
+        row.nextSibling.remove();
+        return;
+    }
+
+    const detail = document.createElement("div");
+    detail.className = "detail-row";
+
+    detail.innerHTML = `
+        ${detailItem("Test Case", task.test_case)}
+        ${detailItem("Test Result", task.test_result)}
+        ${detailItem("Gamepack", task.gamepack)}
+    `;
+
+    row.after(detail);
+}
+
+function detailItem(label, text) {
+    return `
+        <div class="detail-item">
+            <div class="label">${label}</div>
+            <div class="value" onclick="copyText('${escapeHtml(text || "")}')">
+                ${escapeHtml(text || "")}
+            </div>
+        </div>
+    `;
+}
+
+function copyText(text) {
+    navigator.clipboard.writeText(text);
+    showStatus("已复制");
 }
 
 function esc(str) {
@@ -95,15 +136,16 @@ function esc(str) {
     return div.innerHTML;
 }
 
-function fmt(val) {
-    if (val == null || val === "") return "0";
-    const n = parseFloat(val);
-    return isNaN(n) ? "0" : n.toFixed(2);
+function escapeHtml(str) {
+    return str.replace(/'/g, "\\'").replace(/"/g, "&quot;");
 }
 
-// ─── Selection ─────────────────────────────────────────────────────────────
+// ─── Selection ──────────────────────────────────────────────────────────────
 
 function selectRow(id) {
+    // Close any open detail rows first
+    document.querySelectorAll(".detail-row").forEach(el => el.remove());
+
     selectedId = selectedId === id ? null : id;
 
     document.querySelectorAll(".grid-row").forEach(row => {
@@ -126,7 +168,7 @@ function updateReorderButtons() {
     btnDown.disabled = idx >= tasks.length - 1;
 }
 
-// ─── Modals ───────────────────────────────────────────────────────────────
+// ─── Modals ─────────────────────────────────────────────────────────────────
 
 function openEditModal(task) {
     modalTitle.textContent = task ? "编辑记录" : "新建记录";
@@ -134,31 +176,26 @@ function openEditModal(task) {
     document.getElementById("task-id").value = task ? task.id : "";
 
     // 基本信息
-    document.getElementById("task-name").value = task ? (task.task_name || "") : "";
+    document.getElementById("task-test-name").value = task ? (task.test_name || "") : "";
     document.getElementById("task-publisher").value = task ? (task.publisher || "") : "";
-    document.getElementById("task-game-title").value = task ? (task.game_title || "") : "";
-    document.getElementById("task-gamepack-url").value = task ? (task.gamepack_url || "") : "";
 
     // 时间
     document.getElementById("task-start-date").value = task && task.start_date ? task.start_date : "";
     document.getElementById("task-end-date").value = task && task.end_date ? task.end_date : "";
-    document.getElementById("task-total-testing-time").value =
-        task && task.total_testing_time != null ? task.total_testing_time : "";
 
-    // 测试
-    document.getElementById("task-test-cases").value = task ? (task.test_cases || "") : "";
-    document.getElementById("task-test-results").value = task ? (task.test_results || "") : "";
+    // 测试内容
+    document.getElementById("task-test-case").value = task ? (task.test_case || "") : "";
+    document.getElementById("task-test-result").value = task ? (task.test_result || "") : "";
+    document.getElementById("task-gamepack").value = task ? (task.gamepack || "") : "";
 
-    // 财务
-    document.getElementById("task-reward-amount").value =
-        task && task.reward_amount != null ? task.reward_amount : "";
-    document.getElementById("task-payment-cost").value =
-        task && task.payment_cost != null ? task.payment_cost : "";
-    document.getElementById("task-payment-received-date").value =
-        task && task.payment_received_date ? task.payment_received_date : "";
+    // 工时/财务
+    document.getElementById("task-work-time").value = task ? (task.work_time || "") : "";
+    document.getElementById("task-payment").value = task ? (task.payment || "") : "";
+    document.getElementById("task-income").value = task ? (task.income || "") : "";
+    document.getElementById("task-received-date").value = task && task.received_date ? task.received_date : "";
 
     editModal.classList.add("active");
-    document.getElementById("task-name").focus();
+    document.getElementById("task-test-name").focus();
 }
 
 function closeEditModal() {
@@ -166,7 +203,7 @@ function closeEditModal() {
     taskForm.reset();
 }
 
-// ─── Status ────────────────────────────────────────────────────────────────
+// ─── Status ─────────────────────────────────────────────────────────────────
 
 function showStatus(msg, isError = false) {
     statusMessage.textContent = msg;
@@ -176,26 +213,25 @@ function showStatus(msg, isError = false) {
     }
 }
 
-// ─── Build payload from form ───────────────────────────────────────────────
+// ─── Build payload from form ─────────────────────────────────────────────────
 
 function buildPayload() {
     return {
-        task_name: document.getElementById("task-name").value.trim(),
+        test_name: document.getElementById("task-test-name").value.trim(),
         publisher: document.getElementById("task-publisher").value.trim() || null,
-        game_title: document.getElementById("task-game-title").value.trim() || null,
-        gamepack_url: document.getElementById("task-gamepack-url").value.trim() || null,
         start_date: document.getElementById("task-start-date").value || null,
         end_date: document.getElementById("task-end-date").value || null,
-        total_testing_time: parseFloat(document.getElementById("task-total-testing-time").value) || null,
-        test_cases: document.getElementById("task-test-cases").value.trim() || null,
-        test_results: document.getElementById("task-test-results").value.trim() || null,
-        reward_amount: parseFloat(document.getElementById("task-reward-amount").value) || 0,
-        payment_cost: parseFloat(document.getElementById("task-payment-cost").value) || 0,
-        payment_received_date: document.getElementById("task-payment-received-date").value || null,
+        test_case: document.getElementById("task-test-case").value.trim() || null,
+        test_result: document.getElementById("task-test-result").value.trim() || null,
+        gamepack: document.getElementById("task-gamepack").value.trim() || null,
+        work_time: document.getElementById("task-work-time").value.trim() || null,
+        payment: document.getElementById("task-payment").value.trim() || null,
+        income: document.getElementById("task-income").value.trim() || null,
+        received_date: document.getElementById("task-received-date").value || null,
     };
 }
 
-// ─── Event listeners ───────────────────────────────────────────────────────
+// ─── Event listeners ─────────────────────────────────────────────────────────
 
 btnNew.addEventListener("click", () => openEditModal(null));
 
@@ -244,8 +280,8 @@ taskForm.addEventListener("submit", async (e) => {
     const id = document.getElementById("task-id").value;
     const payload = buildPayload();
 
-    if (!payload.task_name) {
-        showStatus("任务名称必填", true);
+    if (!payload.test_name) {
+        showStatus("测试名称必填", true);
         return;
     }
 
@@ -270,13 +306,12 @@ editModal.addEventListener("click", (e) => {
     if (e.target === editModal) closeEditModal();
 });
 
-// Esc closes modal
 document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && editModal.classList.contains("active")) {
         closeEditModal();
     }
 });
 
-// ─── Init ──────────────────────────────────────────────────────────────────
+// ─── Init ────────────────────────────────────────────────────────────────────
 
 loadTasks();

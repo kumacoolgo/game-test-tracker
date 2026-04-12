@@ -48,7 +48,7 @@ header h1 { font-size: 1.5rem; color: #58a6ff; }
 
 .grid-header {
     display: grid;
-    grid-template-columns: 50px 2fr 1.5fr 90px 80px 80px 90px;
+    grid-template-columns: 40px 2fr 1fr 90px 90px 80px 60px 70px 70px 90px;
     background: #161b22;
     font-weight: 600;
     font-size: 0.8rem;
@@ -59,7 +59,7 @@ header h1 { font-size: 1.5rem; color: #58a6ff; }
 
 .grid-row {
     display: grid;
-    grid-template-columns: 50px 2fr 1.5fr 90px 80px 80px 90px;
+    grid-template-columns: 40px 2fr 1fr 90px 90px 80px 60px 70px 70px 90px;
     border-top: 1px solid #21262d;
     cursor: pointer;
     transition: background 0.1s;
@@ -78,11 +78,46 @@ header h1 { font-size: 1.5rem; color: #58a6ff; }
     font-size: 0.875rem;
 }
 
-.col-reward, .col-cost, .col-profit { justify-content: flex-end; font-variant-numeric: tabular-nums; }
-.col-profit { color: #3fb950; font-weight: 600; }
-.col-cost { color: #f85149; }
+.action-btn {
+    color: #58a6ff;
+    cursor: pointer;
+    justify-content: center;
+}
+.action-btn:hover { text-decoration: underline; }
 
-/* ─── Modal ─────────────────────────────────────────────────────────────── */
+/* ─── Detail Row ──────────────────────────────────────────────────────────── */
+
+.detail-row {
+    background: #111;
+    padding: 10px 20px;
+    border-top: 1px solid #21262d;
+}
+
+.detail-item {
+    display: flex;
+    gap: 20px;
+    padding: 4px 0;
+}
+
+.detail-item .label {
+    width: 120px;
+    color: #9cdcfe;
+    flex-shrink: 0;
+}
+
+.detail-item .value {
+    color: #4ec9b0;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.detail-item .value:hover {
+    text-decoration: underline;
+}
+
+/* ─── Modal ───────────────────────────────────────────────────────────────── */
 
 .modal {
     display: none;

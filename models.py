@@ -1,6 +1,6 @@
 """SQLAlchemy ORM models — Game Test Tracker."""
 
-from sqlalchemy import Column, Integer, String, Text, Date, Numeric, DateTime
+from sqlalchemy import Column, Integer, String, Text, DateTime
 from sqlalchemy.sql import func
 from database import Base
 
@@ -10,28 +10,21 @@ class Task(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # 基本信息
-    task_name = Column(String(255), nullable=False)
+    test_name = Column(String(255), nullable=False)
     publisher = Column(String(255))
-    game_title = Column(String(255))
-    gamepack_url = Column(Text)
 
-    # 时间
-    start_date = Column(Date)
-    end_date = Column(Date)
-    total_testing_time = Column(Numeric(6, 2))
+    start_date = Column(String(20))
+    end_date = Column(String(20))
 
-    # 测试内容
-    test_cases = Column(Text)
-    test_results = Column(Text)
+    test_case = Column(Text)
+    test_result = Column(Text)
+    gamepack = Column(Text)
 
-    # 财务
-    reward_amount = Column(Numeric(10, 2))
-    payment_cost = Column(Numeric(10, 2))
-    profit = Column(Numeric(10, 2))
-    payment_received_date = Column(Date)
+    work_time = Column(String(20))
+    payment = Column(String(20))
+    income = Column(String(20))
+    received_date = Column(String(20))
 
-    # 排序
     sort_order = Column(Integer, nullable=False, default=0)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

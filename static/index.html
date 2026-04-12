@@ -17,8 +17,8 @@
 
                     <div class="form-row">
                         <div class="form-group flex-2">
-                            <label>任务名称</label>
-                            <input type="text" id="task-name" placeholder="任务名称" required>
+                            <label>测试名称</label>
+                            <input type="text" id="task-test-name" placeholder="测试名称" required>
                         </div>
                         <div class="form-group flex-1">
                             <label>发布者</label>
@@ -27,54 +27,53 @@
                     </div>
 
                     <div class="form-row">
-                        <div class="form-group flex-1">
-                            <label>游戏名称</label>
-                            <input type="text" id="task-game-title" placeholder="游戏名称">
-                        </div>
-                        <div class="form-group flex-2">
-                            <label>游戏包链接</label>
-                            <input type="text" id="task-gamepack-url" placeholder="https://...">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
                         <div class="form-group">
-                            <label>开始日期</label>
-                            <input type="date" id="task-start-date">
+                            <label>开始日</label>
+                            <input type="text" id="task-start-date" placeholder="YYYY-MM-DD">
                         </div>
                         <div class="form-group">
-                            <label>结束日期</label>
-                            <input type="date" id="task-end-date">
+                            <label>结束日</label>
+                            <input type="text" id="task-end-date" placeholder="YYYY-MM-DD">
                         </div>
                         <div class="form-group">
-                            <label>测试时长(h)</label>
-                            <input type="number" id="task-total-testing-time" step="0.01" min="0">
+                            <label>工时</label>
+                            <input type="text" id="task-work-time" placeholder="e.g. 8h">
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group flex-1">
-                            <label>测试用例</label>
-                            <textarea id="task-test-cases" placeholder="测试用例描述" rows="2"></textarea>
+                            <label>Test Case</label>
+                            <textarea id="task-test-case" placeholder="Test Case" rows="2"></textarea>
                         </div>
+                    </div>
+
+                    <div class="form-row">
                         <div class="form-group flex-1">
-                            <label>测试结果</label>
-                            <textarea id="task-test-results" placeholder="测试结果" rows="2"></textarea>
+                            <label>Test Result</label>
+                            <textarea id="task-test-result" placeholder="Test Result" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label>Gamepack</label>
+                            <textarea id="task-gamepack" placeholder="Gamepack" rows="2"></textarea>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label>报酬金额(¥)</label>
-                            <input type="number" id="task-reward-amount" step="0.01" min="0">
+                            <label>支付</label>
+                            <input type="text" id="task-payment" placeholder="e.g. 100">
                         </div>
                         <div class="form-group">
-                            <label>成本(¥)</label>
-                            <input type="number" id="task-payment-cost" step="0.01" min="0">
+                            <label>收入</label>
+                            <input type="text" id="task-income" placeholder="e.g. 500">
                         </div>
                         <div class="form-group">
-                            <label>到账日期</label>
-                            <input type="date" id="task-payment-received-date">
+                            <label>到账日</label>
+                            <input type="text" id="task-received-date" placeholder="YYYY-MM-DD">
                         </div>
                     </div>
 
@@ -101,13 +100,16 @@
 
         <div id="task-grid">
             <div class="grid-header">
-                <div class="grid-cell col-id">#</div>
-                <div class="grid-cell col-name">任务</div>
-                <div class="grid-cell col-game">游戏</div>
-                <div class="grid-cell col-reward">报酬</div>
-                <div class="grid-cell col-cost">成本</div>
-                <div class="grid-cell col-profit">利润</div>
-                <div class="grid-cell col-received">到账</div>
+                <div>No</div>
+                <div>TestName</div>
+                <div>发布者</div>
+                <div>开始日</div>
+                <div>结束日</div>
+                <div></div>
+                <div>工时</div>
+                <div>支付</div>
+                <div>收入</div>
+                <div>到账日</div>
             </div>
             <div id="grid-body"></div>
         </div>

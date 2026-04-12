@@ -1,23 +1,24 @@
 """Pydantic schemas — Game Test Tracker."""
 
 from pydantic import BaseModel
-from datetime import date, datetime
+from datetime import datetime
 from typing import Optional
 
 
 class TaskBase(BaseModel):
-    task_name: str
+    test_name: str
     publisher: Optional[str] = None
-    game_title: Optional[str] = None
-    gamepack_url: Optional[str] = None
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
-    total_testing_time: Optional[float] = None
-    test_cases: Optional[str] = None
-    test_results: Optional[str] = None
-    reward_amount: Optional[float] = 0
-    payment_cost: Optional[float] = 0
-    payment_received_date: Optional[date] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+
+    test_case: Optional[str] = None
+    test_result: Optional[str] = None
+    gamepack: Optional[str] = None
+
+    work_time: Optional[str] = None
+    payment: Optional[str] = None
+    income: Optional[str] = None
+    received_date: Optional[str] = None
 
 
 class TaskCreate(TaskBase):
@@ -25,23 +26,23 @@ class TaskCreate(TaskBase):
 
 
 class TaskUpdate(BaseModel):
-    task_name: Optional[str] = None
+    test_name: Optional[str] = None
     publisher: Optional[str] = None
-    game_title: Optional[str] = None
-    gamepack_url: Optional[str] = None
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
-    total_testing_time: Optional[float] = None
-    test_cases: Optional[str] = None
-    test_results: Optional[str] = None
-    reward_amount: Optional[float] = None
-    payment_cost: Optional[float] = None
-    payment_received_date: Optional[date] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+
+    test_case: Optional[str] = None
+    test_result: Optional[str] = None
+    gamepack: Optional[str] = None
+
+    work_time: Optional[str] = None
+    payment: Optional[str] = None
+    income: Optional[str] = None
+    received_date: Optional[str] = None
 
 
 class TaskResponse(TaskBase):
     id: int
-    profit: Optional[float]
     sort_order: int
     created_at: Optional[datetime]
 

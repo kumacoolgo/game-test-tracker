@@ -1,4 +1,4 @@
-"""CRUD operations for Game Test Tracker — with auto profit calculation."""
+"""CRUD operations for Game Test Tracker."""
 
 from sqlalchemy.orm import Session
 from sqlalchemy import func, select
@@ -18,13 +18,7 @@ def create_task(db: Session, task_in: TaskCreate) -> Task:
     max_order = db.query(func.max(Task.sort_order)).scalar()
     next_order = (max_order or 0) + 1
 
-    profit = (task_in.reward_amount or 0) - (task_in.payment_cost or 0)
-
-    task = Task(
-        **task_in.model_dump(),
-        profit=profit,
-        sort_order=next_order,
-    )
+    task = Task(**task_in.model_dump(), sort_order=next_order)
     db.add(task)
     db.commit()
     db.refresh(task)
@@ -39,9 +33,6 @@ def update_task(db: Session, task_id: int, task_in: TaskUpdate) -> Task | None:
     data = task_in.model_dump(exclude_unset=True)
     for k, v in data.items():
         setattr(task, k, v)
-
-    # Auto-calculate profit
-    task.profit = (task.reward_amount or 0) - (task.payment_cost or 0)
 
     db.commit()
     db.refresh(task)
