@@ -61,7 +61,12 @@ async function loadTasks() {
 
 // ─── Render ─────────────────────────────────────────────────────────────────
 
-const isMobile = () => window.innerWidth < 768;
+const isMobile = () => {
+    return (
+        /Mobi|Android|iPhone/i.test(navigator.userAgent) ||
+        window.matchMedia("(pointer: coarse)").matches
+    );
+};
 
 function renderGrid() {
     gridBody.innerHTML = "";
