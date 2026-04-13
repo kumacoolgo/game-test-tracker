@@ -119,10 +119,12 @@ header h1 { font-size: 1.5rem; color: #58a6ff; }
         border-radius: 8px;
         margin: 8px 12px;
         cursor: pointer;
-        transition: background 0.1s;
+        transition: transform 0.1s, box-shadow 0.1s, background 0.1s;
         overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
     .card-item:hover { background: #1c2128; }
+    .card-item:active { transform: scale(0.98); }
     .card-item.selected {
         border-left: 3px solid #58a6ff;
         background: #1f6feb22;
@@ -283,14 +285,15 @@ header h1 { font-size: 1.5rem; color: #58a6ff; }
     #bottom-bar button {
         background: none;
         border: none;
-        color: #58a6ff;
-        font-size: 0.85rem;
-        cursor: pointer;
+        color: #8b949e;
+        font-size: 0.75rem;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 2px;
-        padding: 4px 16px;
+        gap: 3px;
+        padding: 4px 20px;
+        cursor: pointer;
+        transition: color 0.15s;
     }
 
     #bottom-bar button:disabled {
@@ -298,8 +301,12 @@ header h1 { font-size: 1.5rem; color: #58a6ff; }
         cursor: not-allowed;
     }
 
-    #bottom-bar button:not(:disabled):hover {
-        color: #79c0ff;
+    #bottom-bar button.active {
+        color: #58a6ff;
+    }
+
+    #bottom-bar button:not(:disabled):not(.active):hover {
+        color: #c9d1d9;
     }
 
     /* Mobile modal — slide up from bottom like native app */

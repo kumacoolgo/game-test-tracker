@@ -119,57 +119,45 @@ function renderTableRows() {
 }
 
 function renderCards() {
+    gridBody.innerHTML = "";
+
     tasks.forEach((task, index) => {
         const card = document.createElement("div");
         card.className = "card-item" + (selectedId === task.id ? " selected" : "");
         card.dataset.id = task.id;
 
         card.innerHTML = `
-            <div class="card-summary">
-                <span class="card-field">
-                    <span class="card-label">#</span>
-                    <span class="card-value">${index + 1}</span>
-                </span>
-                <span class="card-field">
-                    <span class="card-label">Name</span>
-                    <span class="card-value">${esc(task.test_name)}</span>
-                </span>
-                <span class="card-field">
-                    <span class="card-label">发布</span>
-                    <span class="card-value">${esc(task.publisher || "—")}</span>
-                </span>
-                <span class="card-field">
-                    <span class="card-label">工时</span>
-                    <span class="card-value">${esc(task.work_time || "—")}</span>
-                </span>
-                <span class="card-field">
-                    <span class="card-label">收入</span>
-                    <span class="card-value">${esc(task.income1 || "—")}</span>
-                </span>
+            <div class="card-main">
+                <div class="card-title">${esc(task.test_name)}</div>
+
+                <div class="card-row">
+                    <span>📦 ${esc(task.publisher || "—")}</span>
+                    <span>⏱ ${esc(task.work_time || "—")}</span>
+                </div>
+
+                <div class="card-income">
+                    💰 ${esc(task.income1 || "—")}
+                </div>
             </div>
-            <div class="card-actions">
-                <span class="action-btn card-detail-toggle" data-id="${task.id}">详情</span>
-                <span class="action-btn card-edit-btn" data-id="${task.id}">编辑</span>
-                <span class="action-btn card-delete-btn" data-id="${task.id}">删除</span>
+
+            <div class="card-expand hidden">
+                ${detailItemCard("Test Case", task.test_case)}
+                ${detailItemCard("Test Result", task.test_result)}
+                ${detailItemCard("Gamepack", task.gamepack)}
             </div>
         `;
 
-        card.addEventListener("click", (e) => {
-            const detailToggle = e.target.closest(".card-detail-toggle");
-            const editBtn = e.target.closest(".card-edit-btn");
-            const deleteBtn = e.target.closest(".card-delete-btn");
-            if (detailToggle) {
-                e.stopPropagation();
-                toggleCardDetail(card, task);
-            } else if (editBtn) {
-                e.stopPropagation();
-                openEditModal(task);
-            } else if (deleteBtn) {
-                e.stopPropagation();
-                confirmDelete(task.id);
-            } else {
-                selectRow(task.id);
-            }
+        // 点击整卡展开（App行为）
+        card.addEventListener("click", () => {
+            const expand = card.querySelector(".card-expand");
+            expand.classList.toggle("hidden");
+
+            // 顺便选中
+            selectedId = task.id;
+            updateBottomBar();
+            document.querySelectorAll(".card-item").forEach(c => {
+                c.classList.toggle("selected", parseInt(c.dataset.id) === selectedId);
+            });
         });
 
         gridBody.appendChild(card);
@@ -488,6 +476,14 @@ btnMDelete.addEventListener("click", () => {
 function updateBottomBar() {
     btnMEdit.disabled = selectedId === null;
     btnMDelete.disabled = selectedId === null;
+
+    document.querySelectorAll("#bottom-bar button").forEach(btn => {
+        btn.classList.remove("active");
+    });
+
+    if (selectedId) {
+        btnMEdit.classList.add("active");
+    }
 }
 
 // ─── Responsive ──────────────────────────────────────────────────────────────
