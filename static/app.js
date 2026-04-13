@@ -22,6 +22,9 @@ const btnUp = document.getElementById("btn-up");
 const btnDown = document.getElementById("btn-down");
 const btnExport = document.getElementById("btn-export");
 const btnImport = document.getElementById("btn-import");
+const btnMNew = document.getElementById("m-new");
+const btnMEdit = document.getElementById("m-edit");
+const btnMDelete = document.getElementById("m-delete");
 
 const editModal = document.getElementById("edit-modal");
 const taskForm = document.getElementById("task-form");
@@ -49,6 +52,7 @@ async function loadTasks() {
         tasks = await api("GET", "/tasks");
         selectedId = null;
         updateReorderButtons();
+        updateBottomBar();
         renderGrid();
     } catch (e) {
         showStatus("加载失败: " + e.message, true);
@@ -271,6 +275,7 @@ function selectRow(id) {
     updateReorderButtons();
     btnEdit.disabled = selectedId === null;
     btnDelete.disabled = selectedId === null;
+    updateBottomBar();
 }
 
 function updateReorderButtons() {
@@ -463,6 +468,27 @@ document.addEventListener("keydown", (e) => {
 // ─── Init ────────────────────────────────────────────────────────────────────
 
 loadTasks();
+
+// ─── Mobile Bottom Bar ───────────────────────────────────────────────────────
+
+btnMNew.addEventListener("click", () => openEditModal(null));
+
+btnMEdit.addEventListener("click", () => {
+    if (!selectedId) return showStatus("请选择记录", true);
+    const task = tasks.find(t => t.id === selectedId);
+    if (task) openEditModal(task);
+});
+
+btnMDelete.addEventListener("click", () => {
+    if (!selectedId) return showStatus("请选择记录", true);
+    confirmDelete(selectedId);
+});
+
+// Sync bottom bar disabled state with desktop toolbar
+function updateBottomBar() {
+    btnMEdit.disabled = selectedId === null;
+    btnMDelete.disabled = selectedId === null;
+}
 
 // ─── Responsive ──────────────────────────────────────────────────────────────
 
