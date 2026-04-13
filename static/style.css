@@ -43,13 +43,13 @@ header h1 { font-size: 1.5rem; color: #58a6ff; }
 #task-grid {
     border: 1px solid #30363d;
     border-radius: 8px;
-    overflow: hidden;
+    overflow-x: auto;
 }
 
-/* Desktop grid layout */
 .grid-header {
     display: grid;
     grid-template-columns: 40px 2fr 1fr 90px 90px 80px 60px 70px 90px 70px 70px 90px;
+    min-width: 900px;
     background: #161b22;
     font-weight: 600;
     font-size: 0.8rem;
@@ -61,11 +61,12 @@ header h1 { font-size: 1.5rem; color: #58a6ff; }
 .grid-row {
     display: grid;
     grid-template-columns: 40px 2fr 1fr 90px 90px 80px 60px 70px 90px 70px 70px 90px;
+    min-width: 900px;
     border-top: 1px solid #21262d;
     cursor: pointer;
     transition: background 0.1s;
 }
-.grid-row:hover { background: #161b22; }
+.grid-row:hover { background: #1c2128; }
 .grid-row.selected { background: #1f6feb22; border-left: 3px solid #58a6ff; }
 .grid-row.empty { display: block; padding: 24px; text-align: center; color: #484f58; cursor: default; }
 
@@ -86,118 +87,6 @@ header h1 { font-size: 1.5rem; color: #58a6ff; }
 }
 .action-btn:hover { text-decoration: underline; }
 
-/* ─── Mobile Card View ────────────────────────────────────────────────────── */
-
-@media (max-width: 767px) {
-    #app { padding: 12px; }
-
-    #task-grid {
-        border: none;
-        border-radius: 0;
-        margin: 0 -12px;
-    }
-
-    .grid-header { display: none; }
-
-    .card-empty {
-        padding: 32px 16px;
-        text-align: center;
-        color: #484f58;
-    }
-
-    /* Hide desktop-only toolbar buttons on mobile */
-    #btn-edit,
-    #btn-delete,
-    #btn-up,
-    #btn-down { display: none; }
-
-    header h1 { font-size: 1.2rem; }
-
-    .card-item {
-        background: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 8px;
-        margin: 8px 12px;
-        cursor: pointer;
-        transition: transform 0.1s, box-shadow 0.1s, background 0.1s;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    }
-    .card-item:hover { background: #1c2128; }
-    .card-item:active { transform: scale(0.98); }
-    .card-item.selected {
-        border-left: 3px solid #58a6ff;
-        background: #1f6feb22;
-    }
-
-    .card-summary {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px 12px;
-        padding: 12px 14px;
-        font-size: 0.85rem;
-    }
-
-    .card-field {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        min-width: 0;
-    }
-    .card-field .card-label {
-        color: #8b949e;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        flex-shrink: 0;
-    }
-    .card-field .card-value {
-        color: #e6edf3;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        max-width: 120px;
-    }
-
-    .card-actions {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        padding: 8px 14px;
-        border-top: 1px solid #21262d;
-        background: #0d1117;
-    }
-    .card-actions .action-btn {
-        font-size: 0.8rem;
-        padding: 4px 0;
-    }
-
-    .card-detail {
-        background: #111;
-        padding: 12px 14px;
-        border-top: 1px solid #21262d;
-    }
-    .card-detail .detail-item {
-        display: flex;
-        gap: 12px;
-        padding: 4px 0;
-        font-size: 0.85rem;
-    }
-    .card-detail .detail-item .label {
-        width: 80px;
-        color: #9cdcfe;
-        flex-shrink: 0;
-        font-size: 0.8rem;
-    }
-    .card-detail .detail-item .value {
-        color: #4ec9b0;
-        cursor: pointer;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-}
-
 /* ─── Detail Row ──────────────────────────────────────────────────────────── */
 
 .detail-row {
@@ -214,7 +103,7 @@ header h1 { font-size: 1.5rem; color: #58a6ff; }
 
 .detail-item .label {
     width: 120px;
-    color: #9cdcfe;
+    color: #9adcfe;
     flex-shrink: 0;
 }
 
@@ -255,85 +144,6 @@ header h1 { font-size: 1.5rem; color: #58a6ff; }
     overflow-y: auto;
 }
 .modal-content h2 { margin-bottom: 20px; font-size: 1.1rem; color: #58a6ff; }
-
-/* ─── Mobile Form ─────────────────────────────────────────────────────────── */
-
-@media (max-width: 767px) {
-    .card-detail .detail-item .value:hover {
-        text-decoration: underline;
-    }
-
-    /* Mobile App Bottom Bar */
-    body {
-        padding-bottom: 70px;
-    }
-
-    #bottom-bar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 60px;
-        background: #0d1117;
-        border-top: 1px solid #30363d;
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        z-index: 999;
-    }
-
-    #bottom-bar button {
-        background: none;
-        border: none;
-        color: #8b949e;
-        font-size: 0.75rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 3px;
-        padding: 4px 20px;
-        cursor: pointer;
-        transition: color 0.15s;
-    }
-
-    #bottom-bar button:disabled {
-        opacity: 0.35;
-        cursor: not-allowed;
-    }
-
-    #bottom-bar button.active {
-        color: #58a6ff;
-    }
-
-    #bottom-bar button:not(:disabled):not(.active):hover {
-        color: #c9d1d9;
-    }
-
-    /* Mobile modal — slide up from bottom like native app */
-    .modal {
-        padding: 0;
-        align-items: flex-end;
-    }
-
-    .modal-content {
-        border-radius: 16px 16px 0 0;
-        padding: 20px 16px;
-        max-height: 85vh;
-    }
-
-    .form-row {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .form-group.flex-1,
-    .form-group.flex-2 { flex: none; }
-
-    /* Mobile form inputs — prevent iOS zoom */
-    input, textarea {
-        font-size: 16px;
-    }
-}
 
 /* ─── Form ───────────────────────────────────────────────────────────────── */
 

@@ -22,9 +22,6 @@ const btnUp = document.getElementById("btn-up");
 const btnDown = document.getElementById("btn-down");
 const btnExport = document.getElementById("btn-export");
 const btnImport = document.getElementById("btn-import");
-const btnMNew = document.getElementById("m-new");
-const btnMEdit = document.getElementById("m-edit");
-const btnMDelete = document.getElementById("m-delete");
 
 const editModal = document.getElementById("edit-modal");
 const taskForm = document.getElementById("task-form");
@@ -52,7 +49,6 @@ async function loadTasks() {
         tasks = await api("GET", "/tasks");
         selectedId = null;
         updateReorderButtons();
-        updateBottomBar();
         renderGrid();
     } catch (e) {
         showStatus("加载失败: " + e.message, true);
@@ -61,28 +57,15 @@ async function loadTasks() {
 
 // ─── Render ─────────────────────────────────────────────────────────────────
 
-const isMobile = () => {
-    return (
-        /Mobi|Android|iPhone/i.test(navigator.userAgent) ||
-        window.matchMedia("(pointer: coarse)").matches
-    );
-};
-
 function renderGrid() {
     gridBody.innerHTML = "";
 
     if (tasks.length === 0) {
-        gridBody.innerHTML = isMobile()
-            ? '<div class="card-empty">暂无记录 — 点击「新建」添加</div>'
-            : '<div class="grid-row empty">暂无记录 — 点击「新建」添加</div>';
+        gridBody.innerHTML = '<div class="grid-row empty">暂无记录 — 点击「新建」添加</div>';
         return;
     }
 
-    if (isMobile()) {
-        renderCards();
-    } else {
-        renderTableRows();
-    }
+    renderTableRows();
 }
 
 function renderTableRows() {
@@ -110,7 +93,7 @@ function renderTableRows() {
         `;
 
         row.querySelector(".action-btn").addEventListener("click", () => {
-            toggleDetailDesktop(row, task);
+            toggleDetail(row, task);
         });
 
         row.addEventListener("click", (e) => {
@@ -123,90 +106,7 @@ function renderTableRows() {
     });
 }
 
-function renderCards() {
-    gridBody.innerHTML = "";
-
-    tasks.forEach((task, index) => {
-        const card = document.createElement("div");
-        card.className = "card-item" + (selectedId === task.id ? " selected" : "");
-        card.dataset.id = task.id;
-
-        card.innerHTML = `
-            <div class="card-main">
-                <div class="card-title">${esc(task.test_name)}</div>
-
-                <div class="card-row">
-                    <span>📦 ${esc(task.publisher || "—")}</span>
-                    <span>⏱ ${esc(task.work_time || "—")}</span>
-                </div>
-
-                <div class="card-income">
-                    💰 ${esc(task.income1 || "—")}
-                </div>
-            </div>
-
-            <div class="card-expand hidden">
-                ${detailItemCard("Test Case", task.test_case)}
-                ${detailItemCard("Test Result", task.test_result)}
-                ${detailItemCard("Gamepack", task.gamepack)}
-            </div>
-        `;
-
-        // 点击整卡展开（App行为）
-        card.addEventListener("click", () => {
-            const expand = card.querySelector(".card-expand");
-            expand.classList.toggle("hidden");
-
-            // 顺便选中
-            selectedId = task.id;
-            updateBottomBar();
-            document.querySelectorAll(".card-item").forEach(c => {
-                c.classList.toggle("selected", parseInt(c.dataset.id) === selectedId);
-            });
-        });
-
-        gridBody.appendChild(card);
-    });
-}
-
-function toggleCardDetail(card, task) {
-    const existing = card.querySelector(".card-detail");
-    if (existing) {
-        existing.remove();
-        return;
-    }
-    const detail = document.createElement("div");
-    detail.className = "card-detail";
-    detail.innerHTML = `
-        ${detailItemCard("Test Case", task.test_case)}
-        ${detailItemCard("Test Result", task.test_result)}
-        ${detailItemCard("Gamepack", task.gamepack)}
-    `;
-    detail.querySelectorAll(".value").forEach(el => {
-        el.onclick = () => copyText(el.dataset.text);
-    });
-    card.querySelector(".card-actions").after(detail);
-}
-
-function detailItemCard(label, text) {
-    return `
-        <div class="detail-item">
-            <div class="label">${label}</div>
-            <div class="value" data-text="${escapeHtml(text || "")}">${escapeHtml(text || "—")}</div>
-        </div>
-    `;
-}
-
-function confirmDelete(id) {
-    if (!confirm("删除这条记录？")) return;
-    api("DELETE", `/tasks/${id}`).then(() => {
-        selectedId = null;
-        loadTasks();
-        showStatus("已删除");
-    }).catch(err => showStatus(err.message, true));
-}
-
-function toggleDetailDesktop(row, task) {
+function toggleDetail(row, task) {
     if (row.nextSibling && row.nextSibling.classList.contains("detail-row")) {
         row.nextSibling.remove();
         return;
@@ -214,17 +114,17 @@ function toggleDetailDesktop(row, task) {
     const detail = document.createElement("div");
     detail.className = "detail-row";
     detail.innerHTML = `
-        ${detailItemDesktop("Test Case", task.test_case)}
-        ${detailItemDesktop("Test Result", task.test_result)}
-        ${detailItemDesktop("Gamepack", task.gamepack)}
+        ${detailItem("Test Case", task.test_case)}
+        ${detailItem("Test Result", task.test_result)}
+        ${detailItem("Gamepack", task.gamepack)}
     `;
     detail.querySelectorAll(".value").forEach(el => {
-        el.onclick = () => copyText(el.dataset.text);
+        el.addEventListener("click", () => copyText(el.dataset.text));
     });
     row.after(detail);
 }
 
-function detailItemDesktop(label, text) {
+function detailItem(label, text) {
     return `
         <div class="detail-item">
             <div class="label">${label}</div>
@@ -232,8 +132,6 @@ function detailItemDesktop(label, text) {
         </div>
     `;
 }
-
-
 
 function copyText(text) {
     navigator.clipboard.writeText(text);
@@ -254,21 +152,17 @@ function escapeHtml(str) {
 // ─── Selection ──────────────────────────────────────────────────────────────
 
 function selectRow(id) {
-    document.querySelectorAll(".detail-row, .card-detail").forEach(el => el.remove());
+    document.querySelectorAll(".detail-row").forEach(el => el.remove());
 
     selectedId = selectedId === id ? null : id;
 
     document.querySelectorAll(".grid-row").forEach(row => {
         row.classList.toggle("selected", parseInt(row.dataset.id) === selectedId);
     });
-    document.querySelectorAll(".card-item").forEach(card => {
-        card.classList.toggle("selected", parseInt(card.dataset.id) === selectedId);
-    });
 
     updateReorderButtons();
     btnEdit.disabled = selectedId === null;
     btnDelete.disabled = selectedId === null;
-    updateBottomBar();
 }
 
 function updateReorderButtons() {
@@ -461,42 +355,3 @@ document.addEventListener("keydown", (e) => {
 // ─── Init ────────────────────────────────────────────────────────────────────
 
 loadTasks();
-
-// ─── Mobile Bottom Bar ───────────────────────────────────────────────────────
-
-btnMNew.addEventListener("click", () => openEditModal(null));
-
-btnMEdit.addEventListener("click", () => {
-    if (!selectedId) return showStatus("请选择记录", true);
-    const task = tasks.find(t => t.id === selectedId);
-    if (task) openEditModal(task);
-});
-
-btnMDelete.addEventListener("click", () => {
-    if (!selectedId) return showStatus("请选择记录", true);
-    confirmDelete(selectedId);
-});
-
-// Sync bottom bar disabled state with desktop toolbar
-function updateBottomBar() {
-    btnMEdit.disabled = selectedId === null;
-    btnMDelete.disabled = selectedId === null;
-
-    document.querySelectorAll("#bottom-bar button").forEach(btn => {
-        btn.classList.remove("active");
-    });
-
-    if (selectedId) {
-        btnMEdit.classList.add("active");
-    }
-}
-
-// ─── Responsive ──────────────────────────────────────────────────────────────
-
-let lastWidth = window.innerWidth;
-window.addEventListener("resize", () => {
-    if ((window.innerWidth < 768) !== (lastWidth < 768)) {
-        lastWidth = window.innerWidth;
-        renderGrid();
-    }
-});
