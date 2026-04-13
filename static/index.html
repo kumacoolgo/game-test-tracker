@@ -39,6 +39,14 @@
                             <label>工时</label>
                             <input type="text" id="task-work-time" placeholder="e.g. 8h">
                         </div>
+                        <div class="form-group">
+                            <label>收入1</label>
+                            <input type="text" id="task-income1" placeholder="e.g. 500">
+                        </div>
+                        <div class="form-group">
+                            <label>到账1</label>
+                            <input type="text" id="task-received-date1" placeholder="YYYY-MM-DD">
+                        </div>
                     </div>
 
                     <div class="form-row">
@@ -68,12 +76,12 @@
                             <input type="text" id="task-payment" placeholder="e.g. 100">
                         </div>
                         <div class="form-group">
-                            <label>收入</label>
-                            <input type="text" id="task-income" placeholder="e.g. 500">
+                            <label>收入2</label>
+                            <input type="text" id="task-income2" placeholder="e.g. 500">
                         </div>
                         <div class="form-group">
-                            <label>到账日</label>
-                            <input type="text" id="task-received-date" placeholder="YYYY-MM-DD">
+                            <label>到账2</label>
+                            <input type="text" id="task-received-date2" placeholder="YYYY-MM-DD">
                         </div>
                     </div>
 
@@ -96,6 +104,9 @@
             <button id="btn-delete" class="btn btn-danger" disabled>删除</button>
             <button id="btn-up" class="btn" disabled>上移</button>
             <button id="btn-down" class="btn" disabled>下移</button>
+            <button id="btn-export" class="btn">导出</button>
+            <input type="file" id="file-import" accept=".xlsx,.xls" hidden>
+            <button id="btn-import" class="btn">导入</button>
         </div>
 
         <div id="task-grid">
@@ -107,9 +118,11 @@
                 <div class="grid-cell">结束日</div>
                 <div class="grid-cell"></div>
                 <div class="grid-cell">工时</div>
+                <div class="grid-cell">收入1</div>
+                <div class="grid-cell">到账1</div>
                 <div class="grid-cell">支付</div>
-                <div class="grid-cell">收入</div>
-                <div class="grid-cell">到账日</div>
+                <div class="grid-cell">收入2</div>
+                <div class="grid-cell">到账2</div>
             </div>
             <div id="grid-body"></div>
         </div>

@@ -21,9 +21,13 @@ class Task(Base):
     gamepack = Column(Text)
 
     work_time = Column(String(20))
+
+    income1 = Column(String(20))
+    received_date1 = Column(String(20))
+
     payment = Column(String(20))
-    income = Column(String(20))
-    received_date = Column(String(20))
+    income2 = Column(String(20))
+    received_date2 = Column(String(20))
 
     sort_order = Column(Integer, nullable=False, default=0)
 

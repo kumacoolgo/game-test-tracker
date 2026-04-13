@@ -16,9 +16,13 @@ class TaskBase(BaseModel):
     gamepack: Optional[str] = None
 
     work_time: Optional[str] = None
+
+    income1: Optional[str] = None
+    received_date1: Optional[str] = None
+
     payment: Optional[str] = None
-    income: Optional[str] = None
-    received_date: Optional[str] = None
+    income2: Optional[str] = None
+    received_date2: Optional[str] = None
 
 
 class TaskCreate(TaskBase):
@@ -36,9 +40,13 @@ class TaskUpdate(BaseModel):
     gamepack: Optional[str] = None
 
     work_time: Optional[str] = None
+
+    income1: Optional[str] = None
+    received_date1: Optional[str] = None
+
     payment: Optional[str] = None
-    income: Optional[str] = None
-    received_date: Optional[str] = None
+    income2: Optional[str] = None
+    received_date2: Optional[str] = None
 
 
 class TaskResponse(TaskBase):

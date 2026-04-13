@@ -20,6 +20,8 @@ const btnEdit = document.getElementById("btn-edit");
 const btnDelete = document.getElementById("btn-delete");
 const btnUp = document.getElementById("btn-up");
 const btnDown = document.getElementById("btn-down");
+const btnExport = document.getElementById("btn-export");
+const btnImport = document.getElementById("btn-import");
 
 const editModal = document.getElementById("edit-modal");
 const taskForm = document.getElementById("task-form");
@@ -75,10 +77,15 @@ function renderGrid() {
             <div class="grid-cell">${task.start_date || ""}</div>
             <div class="grid-cell">${task.end_date || ""}</div>
             <div class="grid-cell action-btn">Test Case</div>
+
             <div class="grid-cell">${esc(task.work_time || "")}</div>
+
+            <div class="grid-cell">${esc(task.income1 || "")}</div>
+            <div class="grid-cell">${task.received_date1 || ""}</div>
+
             <div class="grid-cell">${esc(task.payment || "")}</div>
-            <div class="grid-cell">${esc(task.income || "")}</div>
-            <div class="grid-cell">${task.received_date || ""}</div>
+            <div class="grid-cell">${esc(task.income2 || "")}</div>
+            <div class="grid-cell">${task.received_date2 || ""}</div>
         `;
 
         row.querySelector(".action-btn").addEventListener("click", () => {
@@ -193,9 +200,11 @@ function openEditModal(task) {
 
     // 工时/财务
     document.getElementById("task-work-time").value = task ? (task.work_time || "") : "";
+    document.getElementById("task-income1").value = task ? (task.income1 || "") : "";
+    document.getElementById("task-received-date1").value = task && task.received_date1 ? task.received_date1 : "";
     document.getElementById("task-payment").value = task ? (task.payment || "") : "";
-    document.getElementById("task-income").value = task ? (task.income || "") : "";
-    document.getElementById("task-received-date").value = task && task.received_date ? task.received_date : "";
+    document.getElementById("task-income2").value = task ? (task.income2 || "") : "";
+    document.getElementById("task-received-date2").value = task && task.received_date2 ? task.received_date2 : "";
 
     editModal.classList.add("active");
     document.getElementById("task-test-name").focus();
@@ -228,9 +237,11 @@ function buildPayload() {
         test_result: document.getElementById("task-test-result").value.trim() || null,
         gamepack: document.getElementById("task-gamepack").value.trim() || null,
         work_time: document.getElementById("task-work-time").value.trim() || null,
+        income1: document.getElementById("task-income1").value.trim() || null,
+        received_date1: document.getElementById("task-received-date1").value || null,
         payment: document.getElementById("task-payment").value.trim() || null,
-        income: document.getElementById("task-income").value.trim() || null,
-        received_date: document.getElementById("task-received-date").value || null,
+        income2: document.getElementById("task-income2").value.trim() || null,
+        received_date2: document.getElementById("task-received-date2").value || null,
     };
 }
 
@@ -276,6 +287,34 @@ btnDown.addEventListener("click", async () => {
     } catch (err) {
         showStatus(err.message, true);
     }
+});
+
+btnExport.addEventListener("click", () => {
+    window.open("/api/export");
+});
+
+btnImport.addEventListener("click", () => {
+    document.getElementById("file-import").click();
+});
+
+document.getElementById("file-import").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const form = new FormData();
+    form.append("file", file);
+    try {
+        const res = await fetch("/api/import", { method: "POST", body: form });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || `HTTP ${res.status}`);
+        }
+        const result = await res.json();
+        showStatus(`导入成功: ${result.imported} 条`);
+        await loadTasks();
+    } catch (err) {
+        showStatus("导入失败: " + err.message, true);
+    }
+    e.target.value = "";
 });
 
 taskForm.addEventListener("submit", async (e) => {
