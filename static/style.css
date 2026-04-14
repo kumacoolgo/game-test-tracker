@@ -110,15 +110,24 @@ header h1 { font-size: 1.5rem; color: #58a6ff; }
     flex-shrink: 0;
 }
 
-.detail-item .value {
-    color: #4ec9b0;
-    cursor: pointer;
+.detail-item .value-cell {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.detail-item .value:hover {
+.detail-item .value-cell .value {
+    color: #4ec9b0;
+    cursor: pointer;
+}
+
+.detail-item .value-cell .value-link {
+    color: #58a6ff;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.detail-item .value-cell .value-link:hover {
     text-decoration: underline;
 }
 

@@ -118,17 +118,18 @@ function toggleDetail(row, task) {
         ${detailItem("Test Result", task.test_result)}
         ${detailItem("Gamepack", task.gamepack)}
     `;
-    detail.querySelectorAll(".value").forEach(el => {
-        el.addEventListener("click", () => copyText(el.dataset.text));
-    });
     row.after(detail);
 }
 
 function detailItem(label, text) {
+    const isUrl = text && (text.startsWith("http://") || text.startsWith("https://"));
+    const value = isUrl
+        ? `<a href="${escapeHtml(text)}" target="_blank" rel="noopener noreferrer" class="value-link">${escapeHtml(text)}</a>`
+        : `<span class="value">${escapeHtml(text || "")}</span>`;
     return `
         <div class="detail-item">
             <div class="label">${label}</div>
-            <div class="value" data-text="${escapeHtml(text || "")}">${escapeHtml(text || "")}</div>
+            <div class="value-cell">${value}</div>
         </div>
     `;
 }
